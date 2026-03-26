@@ -8,6 +8,7 @@ This project provides an OPDS (Open Publication Distribution System) server that
 
 - **Fetch books & libraries** from the **Audiobookshelf API**
 - **Supports OPDS** for easy integration with reading apps
+- **Login via `/opds/`** (Basic Auth) and automatic redirect into your user feed
 - **Multiple authentication methods**:
   - Basic auth with Audiobookshelf username and password
   - API key authentication for better security and flexibility
@@ -25,7 +26,7 @@ This project provides an OPDS (Open Publication Distribution System) server that
  - **KOreader**
  - **Moon+ Reader Pro Android**
 
-## � Authentication Methods
+## 🔐 Authentication Methods
 
 OPDS-ABS supports multiple authentication methods to connect to your Audiobookshelf server:
 
@@ -76,7 +77,7 @@ If you need to switch between different authentication methods, you can use the 
 1. `API_KEY_AUTH_ENABLED=false` - Disables all API key authentication, forcing the use of username/password only
 2. `AUTH_TOKEN_CACHING=false` - Disables token caching, ensuring each request is authenticated fresh (useful when testing)
 
-## �🛠 Installation & Usage
+## 🛠 Installation & Usage
 
 ### 1️⃣ **Clone the repository**
 
@@ -101,6 +102,33 @@ This will start the OPDS server.
 - **Web Interface:** `http://localhost:8000/`
 
 You can use an OPDS-compatible reader (e.g., **Calibre, KOReader, Thorium Reader**) to access your books.
+
+## ✅ Validate the OPDS feed (optional)
+
+If you want to validate the feed output, the Python `opdscli` validator is a good option:
+
+```bash
+pip install opdscli
+opdscli validate http://localhost:8000/opds/
+```
+
+## 🛠 Local Development (no Docker required)
+
+### Run the server locally
+
+```bash
+python run.py
+```
+
+By default, the server binds to `0.0.0.0:8000`. If that port is unavailable, the app will automatically try the next port (8001, 8002, ...).
+
+### Override bind address / port
+
+```bash
+HOST=127.0.0.1 PORT=8001 python run.py
+```
+
+This is useful when the default port is already in use or when running in restricted environments.
 
 ## ⚙ Configuration
 
@@ -147,6 +175,8 @@ services:
 | `ITEMS_PER_PAGE` | Number of items per page, 0 to disable pagination | `25` |
 | `OPDS_LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
 | `CACHE_PERSISTENCE_ENABLED` | Enable/disable cache persistence | `true` |
+| `HOST` | Bind host for the server | `0.0.0.0` |
+| `PORT` | Port to bind to (will try next ports if unavailable) | `8000` |
 
 ## 🐳 Running from GitHub Container Registry (GHCR)
 
@@ -197,6 +227,14 @@ You can control pagination behavior through two environment variables:
 For most users, setting `PAGINATION_ENABLED=false` is the simplest way to disable pagination completely. Using `ITEMS_PER_PAGE=0` is an alternative that keeps the pagination code active but shows all items.
 
 Pagination helps improve performance and load times when dealing with large libraries, but disabling it can be useful for smaller libraries or when using clients that work better with complete feeds.
+
+## 🧪 CI / Release Workflow
+
+This repository includes GitHub Actions workflows that run on push and pull requests:
+
+- **Docstring Check** (`.github/workflows/docstring-check.yml`) runs `pydocstyle` and uploads a report artifact.
+- **Docker Image CI** (`.github/workflows/docker-image.yml`) builds and pushes `ghcr.io/<org>/opds-abs:latest` on `master`.
+- **Docker Image CI (dev)** (`.github/workflows/docker-image-dev.yml`) builds and pushes a `dev-<sha>` image on `dev`.
 
 ## 🙌 Contributing
 

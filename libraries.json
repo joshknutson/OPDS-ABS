@@ -1,0 +1,114 @@
+{
+  "libraries": [
+    {
+      "id": "2c9d7d4a-5a5c-4ddd-bfc1-a29c21bbfdce",
+      "name": "Audiobooks",
+      "folders": [
+        {
+          "id": "8c349166-fd97-40c9-96ba-9b7378e50542",
+          "fullPath": "/audiobooks",
+          "libraryId": "2c9d7d4a-5a5c-4ddd-bfc1-a29c21bbfdce",
+          "addedAt": 1731598075189
+        }
+      ],
+      "displayOrder": 1,
+      "icon": "headphones",
+      "mediaType": "book",
+      "provider": "audible",
+      "settings": {
+        "coverAspectRatio": 1,
+        "disableWatcher": false,
+        "autoScanCronExpression": "0 */6 * * *",
+        "skipMatchingMediaWithAsin": false,
+        "skipMatchingMediaWithIsbn": false,
+        "audiobooksOnly": true,
+        "epubsAllowScriptedContent": false,
+        "hideSingleBookSeries": false,
+        "onlyShowLaterBooksInContinueSeries": false,
+        "metadataPrecedence": [
+          "folderStructure",
+          "audioMetatags",
+          "nfoFile",
+          "txtFiles",
+          "opfFile",
+          "absMetadata"
+        ],
+        "markAsFinishedPercentComplete": null,
+        "markAsFinishedTimeRemaining": 10
+      },
+      "lastScan": 1774483205674,
+      "lastScanVersion": "2.33.1",
+      "createdAt": 1731598075155,
+      "lastUpdate": 1774483205674
+    },
+    {
+      "id": "00ebb4a4-1a59-4f0d-8a7d-c73014643cba",
+      "name": "Books",
+      "folders": [
+        {
+          "id": "94bc4034-6a6c-4017-80db-159353c7c6f1",
+          "fullPath": "/books",
+          "libraryId": "00ebb4a4-1a59-4f0d-8a7d-c73014643cba",
+          "addedAt": 1731598642323
+        }
+      ],
+      "displayOrder": 2,
+      "icon": "books-2",
+      "mediaType": "book",
+      "provider": "custom-2a0a8c9c-4a20-46ed-a22a-0ed124f53076",
+      "settings": {
+        "coverAspectRatio": 1,
+        "disableWatcher": false,
+        "autoScanCronExpression": "*/5 * * * *",
+        "skipMatchingMediaWithAsin": false,
+        "skipMatchingMediaWithIsbn": false,
+        "audiobooksOnly": false,
+        "epubsAllowScriptedContent": false,
+        "hideSingleBookSeries": false,
+        "onlyShowLaterBooksInContinueSeries": false,
+        "metadataPrecedence": [
+          "folderStructure",
+          "audioMetatags",
+          "nfoFile",
+          "txtFiles",
+          "opfFile",
+          "absMetadata"
+        ],
+        "markAsFinishedPercentComplete": null,
+        "markAsFinishedTimeRemaining": 10
+      },
+      "lastScan": 1774492210580,
+      "lastScanVersion": "2.33.1",
+      "createdAt": 1731598642297,
+      "lastUpdate": 1774492210580
+    },
+    {
+      "id": "06f06689-c87c-4177-b293-faf50bdb4570",
+      "name": "Podcasts",
+      "folders": [
+        {
+          "id": "7af93a77-4257-4ff9-9f2a-e0c375d41f6e",
+          "fullPath": "/podcasts",
+          "libraryId": "06f06689-c87c-4177-b293-faf50bdb4570",
+          "addedAt": 1731598671339
+        }
+      ],
+      "displayOrder": 3,
+      "icon": "microphone-1",
+      "mediaType": "podcast",
+      "provider": "itunes",
+      "settings": {
+        "coverAspectRatio": 1,
+        "disableWatcher": false,
+        "autoScanCronExpression": "0 */2 * * *",
+        "podcastSearchRegion": "us",
+        "markAsFinishedPercentComplete": null,
+        "markAsFinishedTimeRemaining": 10
+      },
+      "lastScan": 1774490401709,
+      "lastScanVersion": "2.33.1",
+      "createdAt": 1731598671294,
+      "lastUpdate": 1774490401709
+    }
+  ]
+}

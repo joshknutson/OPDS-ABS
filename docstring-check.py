@@ -43,7 +43,8 @@ def run_pydocstyle(path):
     Returns:
         tuple: (return_code, stdout_output, stderr_output)
     """
-    command = ['pydocstyle', path]
+    # Use python -m pydocstyle to avoid relying on the console script being on PATH.
+    command = [sys.executable, "-m", "pydocstyle", path]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     stdout, stderr = process.communicate()
     return process.returncode, stdout, stderr
