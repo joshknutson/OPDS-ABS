@@ -224,9 +224,8 @@ class BaseFeedGenerator:
             ebook_format = media.get("ebookFormat", media.get("ebookFile", {}).get("ebookFormat"))
             logger.debug("Book '%s' format: %s", book_title, ebook_format)
 
-            from opds_abs.config import AUDIOBOOKSHELF_EXTERNAL_URL
-            book_path = f"{AUDIOBOOKSHELF_EXTERNAL_URL}/api/items/{book_id}"
-            cover_url = f"{book_path}/cover?format=jpeg"
+            # Proxy the cover image so the OPDS client can authenticate with Basic Auth
+            cover_url = f"/opds/proxy/cover/{book_id}.jpg"
             series_list = book_metadata.get("seriesName", None)
             
             # Using 0 as default epoch if missing
@@ -292,13 +291,17 @@ class BaseFeedGenerator:
                 download_path = f"/opds/proxy/download/{book_id}/file/{file_ino}"
                 logger.debug("Generated proxied download URL for '%s': %s", book_title, download_path)
 
+                # Display the actual filename if available to differentiate formats/variants
+                file_name = ebook.get('filename')
+                link_title = file_name if file_name else f"{book_author} - {book_title}"
+
                 # Append acquisition link
                 entry_data["entry"]["link"].append({
                     "_attrs": {
                         "href": download_path,
                         "rel": "http://opds-spec.org/acquisition",
                         "type": mime_type,
-                        "title": f"{book_author} - {book_title}"
+                        "title": link_title
                     }
                 })
 

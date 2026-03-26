@@ -386,7 +386,7 @@ def index(request: Request):
         HTMLResponse: The rendered index.html template.
     """
     try:
-        return templates.TemplateResponse("index.html", {"request": request})
+        return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
     except Exception as e:
         log_error(e, context="Rendering index page")
         raise convert_to_http_exception(e, status_code=500,
@@ -452,13 +452,17 @@ async def search_xml(
             return RedirectResponse(url=f"/opds/{display_name}/libraries/{library_id}/search.xml")
 
         params = dict(request.query_params)
-        return templates.TemplateResponse("search.xml", {
-            "request": request,
-            "username": display_name if auth_username else username,
-            "library_id": library_id,
-            "searchTerms": params.get('q', ''),
-            "token": token  # Add token to the template context
-        })
+        return templates.TemplateResponse(
+            request=request,
+            name="search.xml",
+            context={
+                "request": request,
+                "username": display_name if auth_username else username,
+                "library_id": library_id,
+                "searchTerms": params.get('q', ''),
+                "token": token  # Add token to the template context
+            }
+        )
     except Exception as e:
         log_error(e, context=f"Rendering search XML for user {username}, library {library_id}")
         raise convert_to_http_exception(e, status_code=500,
@@ -1108,3 +1112,74 @@ async def proxy_download(
     except Exception as e:
         logger.error("Error setting up download proxy: %s", str(e))
         raise HTTPException(status_code=500, detail=f"Failed to set up download: {str(e)}")
+
+@app.get("/opds/proxy/cover/{item_id}.jpg")
+async def proxy_cover(
+    item_id: str,
+    request: Request,
+    auth_info: tuple = Depends(get_authenticated_user)
+):
+    """Proxy cover images from Audiobookshelf to handle authentication properly."""
+    from fastapi.responses import StreamingResponse
+    import aiohttp
+
+    username, token, display_name = auth_info
+    
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
+        )
+
+    # Use AUDIOBOOKSHELF_API
+    url = f"{AUDIOBOOKSHELF_API}/items/{item_id}/cover?format=jpeg"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def stream_file():
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=headers) as response:
+                    response.raise_for_status()
+                    async for chunk in response.content.iter_any():
+                        yield chunk
+            except Exception as e:
+                logger.error("Error proxying cover: %s", str(e))
+                raise HTTPException(status_code=404, detail="Cover not found")
+
+    return StreamingResponse(stream_file(), media_type="image/jpeg")
+
+@app.get("/opds/proxy/author/{author_id}.jpg")
+async def proxy_author_image(
+    author_id: str,
+    request: Request,
+    auth_info: tuple = Depends(get_authenticated_user)
+):
+    """Proxy author images from Audiobookshelf to handle authentication properly."""
+    from fastapi.responses import StreamingResponse
+    import aiohttp
+
+    username, token, display_name = auth_info
+    
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
+        )
+
+    url = f"{AUDIOBOOKSHELF_API}/authors/{author_id}/image?format=jpeg"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def stream_file():
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=headers) as response:
+                    response.raise_for_status()
+                    async for chunk in response.content.iter_any():
+                        yield chunk
+            except Exception as e:
+                logger.error("Error proxying author image: %s", str(e))
+                raise HTTPException(status_code=404, detail="Image not found")
+
+    return StreamingResponse(stream_file(), media_type="image/jpeg")
