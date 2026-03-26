@@ -105,9 +105,8 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             if not updated_time:
                 updated_time = self.get_current_timestamp()
 
-            # Dynamic initial-based PNG icon using ui-avatars to ensure absolute URLs for MoonReader
-            library_name = library.get("name", "Lib").replace(" ", "+")
-            icon_url = f"https://ui-avatars.com/api/?name={library_name}&background=random&size=256&bold=true"
+            # Use local static image for libraries since many OPDS readers reject URLs with query parameters
+            icon_url = "/static/images/libraries.png"
             icon_type = "image/png"
 
             # Create entry data structure
