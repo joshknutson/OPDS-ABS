@@ -6,6 +6,7 @@ import copy
 
 # Third-party imports
 from fastapi.responses import RedirectResponse
+from datetime import datetime
 
 # Local application imports
 from opds_abs.core.feed_generator import BaseFeedGenerator
@@ -76,9 +77,13 @@ class LibraryFeedGenerator(BaseFeedGenerator):
         data = await fetch_from_api("/libraries", token=token, username=username)
         feed = self.create_base_feed(username=username, token=token)
 
-        # Add feed title using dictionary approach
+        # Add feed metadata using dictionary approach
         feed_data = {
-            "title": {"_text": f"{username}'s Libraries"}
+            "id": {"_text": "urn:audiobookshelf:libraries"},
+            "title": {"_text": f"{username}'s Libraries"},
+            "author": {
+                "name": {"_text": username}
+            }
         }
         dict_to_xml(feed, feed_data)
 
@@ -90,10 +95,27 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             )
 
         for library in libraries:
+            # Format update timestamp
+            updated_time = None
+            if library.get("lastUpdate"):
+                try:
+                    updated_time = datetime.utcfromtimestamp(library.get("lastUpdate") / 1000).strftime('%Y-%m-%dT%H:%M:%SZ')
+                except Exception:
+                    pass
+            if not updated_time:
+                updated_time = self.get_current_timestamp()
+
+            # Dynamic initial-based PNG icon using ui-avatars to ensure absolute URLs for MoonReader
+            library_name = library.get("name", "Lib").replace(" ", "+")
+            icon_url = f"https://ui-avatars.com/api/?name={library_name}&background=random&size=256&bold=true"
+            icon_type = "image/png"
+
             # Create entry data structure
             entry_data = {
                 "entry": {
+                    "id": {"_text": f"urn:audiobookshelf:library:{library['id']}"},
                     "title": {"_text": library["name"]},
+                    "updated": {"_text": updated_time},
                     "link": [
                         {
                             "_attrs": {
@@ -104,9 +126,9 @@ class LibraryFeedGenerator(BaseFeedGenerator):
                         },
                         {
                             "_attrs": {
-                                "href": "/static/images/libraries.png",
-                                "rel": "http://opds-spec.org/image",
-                                "type": "image/png"
+                                "href": icon_url,
+                                "rel": "http://opds-spec.org/image/thumbnail",
+                                "type": icon_type
                             }
                         }
                     ]
@@ -248,7 +270,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
 
                         # Create feed metadata using dictionary approach
                         feed_data = {
-                            "id": {"_text": library_id},
+                            "id": {"_text": f"urn:audiobookshelf:library:{library_id}:collection:{collection_data.get('id', collection_id)}"},
                             "author": {
                                 "name": {"_text": "OPDS Audiobookshelf"}
                             },
@@ -347,7 +369,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
 
         # Create feed metadata using dictionary approach
         feed_data = {
-            "id": {"_text": library_id},
+            "id": {"_text": f"urn:audiobookshelf:library:{library_id}:items"},
             "author": {
                 "name": {"_text": "OPDS Audiobookshelf"}
             },

@@ -224,79 +224,88 @@ class BaseFeedGenerator:
             ebook_format = media.get("ebookFormat", media.get("ebookFile", {}).get("ebookFormat"))
             logger.debug("Book '%s' format: %s", book_title, ebook_format)
 
-            for ebook in ebook_inos:
-                # Use external URL for client-facing download links
-                from opds_abs.config import AUDIOBOOKSHELF_EXTERNAL_URL
-                book_path = f"{AUDIOBOOKSHELF_EXTERNAL_URL}/api/items/{book_id}"
-                file_ino = ebook.get('ino')
+            from opds_abs.config import AUDIOBOOKSHELF_EXTERNAL_URL
+            book_path = f"{AUDIOBOOKSHELF_EXTERNAL_URL}/api/items/{book_id}"
+            cover_url = f"{book_path}/cover?format=jpeg"
+            series_list = book_metadata.get("seriesName", None)
+            
+            # Using 0 as default epoch if missing
+            added_timestamp = book.get('addedAt', 0) / 1000
+            added_at = datetime.fromtimestamp(added_timestamp).strftime('%Y-%m-%d')
 
+            # Create the description content with HTML formatting
+            content_text = (
+                f"{book_metadata.get('description', '')}<br/><br/>"
+                f"{'Series: ' + series_list + '<br/>' if series_list else ''}"
+                f"Published year: {book_metadata.get('publishedYear')}<br/>"
+                f"Genres: {', '.join(book_metadata.get('genres', []))}<br/>"
+                f"Added at: {added_at}<br/>"
+            )
+
+            # Build the base entry data structure
+            entry_data = {
+                "entry": {
+                    "title": {"_text": book_title},
+                    "id": {"_text": f"urn:uuid:{book_id}"},
+                    "updated": {"_text": self.get_current_timestamp()},
+                    "content": {
+                        "_attrs": {"type": "html"},
+                        "_text": content_text
+                    },
+                    "author": {
+                        "name": {"_text": book_author}
+                    },
+                    "link": [
+                        {
+                            "_attrs": {
+                                "href": cover_url,
+                                "rel": "http://opds-spec.org/image",
+                                "type": "image/jpeg"
+                            }
+                        },
+                        {
+                            "_attrs": {
+                                "href": cover_url,
+                                "rel": "http://opds-spec.org/image/thumbnail",
+                                "type": "image/jpeg"
+                            }
+                        }
+                    ]
+                }
+            }
+
+            # Add series info if filtering by series
+            if query_filter.startswith("series"):
+                series_number = book_metadata.get('series', {}).get("sequence", "")
+                series_name = book_metadata.get('series', {}).get("name", "")
+                entry_data["entry"]["series"] = {
+                    "name": {"_text": f" - {series_name} #{series_number}"}
+                }
+
+            format_lower = ebook_format.lower() if ebook_format else "epub"
+            mime_type = FORMAT_TO_MIMETYPE.get(format_lower, "application/epub+zip")
+
+            for ebook in ebook_inos:
+                file_ino = ebook.get('ino')
+                
                 # Use our proxy endpoint instead of direct Audiobookshelf API link
-                # No need to append token as query parameter since our proxy handles authentication
                 download_path = f"/opds/proxy/download/{book_id}/file/{file_ino}"
                 logger.debug("Generated proxied download URL for '%s': %s", book_title, download_path)
 
-                # Cover URL doesn't need authentication
-                cover_url = f"{book_path}/cover?format=jpeg"
-                series_list = book_metadata.get("seriesName", None)
-                added_at = datetime.fromtimestamp(book.get('addedAt')/1000).strftime('%Y-%m-%d')
-
-                # Create the description content with HTML formatting
-                content_text = (
-                    f"{book_metadata.get('description', '')}<br/><br/>"
-                    f"{'Series: ' + series_list + '<br/>' if series_list else ''}"
-                    f"Published year: {book_metadata.get('publishedYear')}<br/>"
-                    f"Genres: {', '.join(book_metadata.get('genres', []))}<br/>"
-                    f"Added at: {added_at}<br/>"
-                )
-
-                # Set the correct MIME type based on the format
-                # Default to epub if the format is unknown
-                format_lower = ebook_format.lower() if ebook_format else "epub"
-                mime_type = FORMAT_TO_MIMETYPE.get(format_lower, "application/epub+zip")
-
-                # Build the entry data structure
-                entry_data = {
-                    "entry": {
-                        "title": {"_text": book_title},
-                        "id": {"_text": book_id},
-                        "updated": {"_text": self.get_current_timestamp()},
-                        "content": {
-                            "_attrs": {"type": "xhtml"},
-                            "_text": content_text
-                        },
-                        "author": {
-                            "name": {"_text": book_author}
-                        },
-                        "link": [
-                            {
-                                "_attrs": {
-                                    "href": download_path,
-                                    "rel": "http://opds-spec.org/acquisition",
-                                    "type": mime_type,
-                                    "title": f"{book_author} - {book_title}"
-                                }
-                            },
-                            {
-                                "_attrs": {
-                                    "href": cover_url,
-                                    "rel": "http://opds-spec.org/image",
-                                    "type": "image/jpeg"
-                                }
-                            }
-                        ]
+                # Append acquisition link
+                entry_data["entry"]["link"].append({
+                    "_attrs": {
+                        "href": download_path,
+                        "rel": "http://opds-spec.org/acquisition",
+                        "type": mime_type,
+                        "title": f"{book_author} - {book_title}"
                     }
-                }
+                })
 
-                # Add series info if filtering by series
-                if query_filter.startswith("series"):
-                    series_number = book_metadata.get('series', {}).get("sequence", "")
-                    series_name = book_metadata.get('series', {}).get("name", "")
-                    entry_data["entry"]["series"] = {
-                        "name": {"_text": f" - {series_name} #{series_number}"}
-                    }
+            # Convert the dictionary to XML elements
+            dict_to_xml(feed, entry_data)
 
-                # Convert the dictionary to XML elements
-                dict_to_xml(feed, entry_data)
+
 
         except (ValueError, KeyError) as e:
             book_title = book.get("media", {}).get("metadata", {}).get("title", "Unknown")

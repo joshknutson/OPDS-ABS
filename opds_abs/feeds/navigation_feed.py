@@ -94,7 +94,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
 
             # Build the feed metadata
             feed_data = {
-                "id": {"_text": f"{library_id}/navigation"},
+                "id": {"_text": f"urn:audiobookshelf:library:{library_id}:navigation"},
                 "title": {"_text": f"Navigation for {username}'s library"},
                 "author": {
                     "name": {"_text": "OPDS Audiobookshelf"},
@@ -130,10 +130,15 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                 else:
                     nav_href = f"{base_path}{nav.get('path','')}"
 
+                # Dynamic initial-based PNG icon using ui-avatars to ensure absolute URLs for MoonReader
+                nav_name = nav.get("name", "Menu").replace(" ", "+")
+                icon_url = f"https://ui-avatars.com/api/?name={nav_name}&background=random&size=256&bold=true"
+
                 # Create entry data structure
                 entry_data = {
                     "entry": {
                         "title": {"_text": nav.get("name", "")},
+                        "id": {"_text": f"urn:audiobookshelf:library:{library_id}:navigation:{nav.get('name', '').lower()}"},
                         "updated": {"_text": self.get_current_timestamp()},
                         "content": {
                             "_attrs": {"type": "text"},
@@ -149,7 +154,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                             },
                             {
                                 "_attrs": {
-                                    "href": f"/static/images/{nav.get('name').lower()}.png",
+                                    "href": icon_url,
                                     "rel": "http://opds-spec.org/image",
                                     "type": "image/png"
                                 }
