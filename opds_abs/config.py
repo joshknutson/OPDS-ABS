@@ -38,7 +38,7 @@ if BASE_PATH and not BASE_PATH.startswith("/"):
 BASE_PATH = BASE_PATH.rstrip("/")
 
 # Derived path helpers for OPDS and static content.
-OPDS_BASE_PATH = f"{BASE_PATH}/opds" if BASE_PATH else "/opds"
+OPDS_BASE_PATH = BASE_PATH if BASE_PATH else "/opds"
 STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
 
 # Authentication configuration
