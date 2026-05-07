@@ -140,6 +140,10 @@ def build_url(path: str) -> str:
     """Build a full URL for redirects using the configured BASE_PATH."""
     if not path.startswith("/"):
         path = "/" + path
+    if BASE_PATH:
+        if path.startswith(BASE_PATH + "/") or path == BASE_PATH:
+            return path
+        return f"{BASE_PATH}{path}"
     return path
 
 # Set more specific log level for our app's loggers

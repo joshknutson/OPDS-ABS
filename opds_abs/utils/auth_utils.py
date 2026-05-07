@@ -573,7 +573,7 @@ async def get_authenticated_user(request: Request) -> Tuple[Optional[str], Optio
             raise HTTPException(
                 status_code=401,
                 detail=str(e),
-                headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
+                headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\", charset=\"UTF-8\""}
             )
 
 async def require_auth(request: Request) -> Tuple[str, str, str]:
@@ -594,7 +594,7 @@ async def require_auth(request: Request) -> Tuple[str, str, str]:
         raise HTTPException(
             status_code=401,
             detail="Authentication required",
-            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
+            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\", charset=\"UTF-8\""}
         )
 
     return username, token, display_name
