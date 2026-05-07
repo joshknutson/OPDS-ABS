@@ -263,7 +263,7 @@ class AuthorFeedGenerator(BaseFeedGenerator):
             token: Optional token to include in URLs
         """
         # Base URL for pagination
-        base_url = f"/opds/{username}/libraries/{library_id}/authors/{author_id}"
+        base_url = self.build_url(f"/opds/{username}/libraries/{library_id}/authors/{author_id}")
         token_param = f"&token={token}" if token else ""
 
         # Add pagination links
@@ -328,9 +328,9 @@ class AuthorFeedGenerator(BaseFeedGenerator):
         """
         try:
             # Get a cover url if we have a book with an ebook
-            cover_url = "/static/images/unknown-author.png"
+            cover_url = self.build_url("/static/images/unknown-author.png")
             if author.get("imagePath"):
-                cover_url = f"/opds/proxy/author/{author.get('id')}.jpg"
+                cover_url = self.build_url(f"/opds/proxy/author/{author.get('id')}.jpg")
 
             # Get author ID and name
             author_id = author.get("id", "")
@@ -340,7 +340,7 @@ class AuthorFeedGenerator(BaseFeedGenerator):
             book_count = author.get("ebook_count", 0)
 
             # Create the base URL for the author's books
-            author_url = f"/opds/{username}/libraries/{library_id}/authors/{author_id}"
+            author_url = self.build_url(f"/opds/{username}/libraries/{library_id}/authors/{author_id}")
 
             # Add token to URL if provided
             if token:
@@ -553,7 +553,7 @@ class AuthorFeedGenerator(BaseFeedGenerator):
             token: Optional token to include in URLs
         """
         # Base URL for pagination
-        base_url = f"/opds/{username}/libraries/{library_id}/authors"
+        base_url = self.build_url(f"/opds/{username}/libraries/{library_id}/authors")
         token_param = f"&token={token}" if token else ""
 
         # Add pagination links

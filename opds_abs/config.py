@@ -30,6 +30,17 @@ else:
 # API endpoints
 AUDIOBOOKSHELF_API = AUDIOBOOKSHELF_INTERNAL_URL + "/api"
 
+# Optional deployment path prefix for the application.
+# Example: BASE_PATH=/service will expose OPDS at /service/opds
+BASE_PATH = os.getenv("BASE_PATH", "").strip()
+if BASE_PATH and not BASE_PATH.startswith("/"):
+    BASE_PATH = "/" + BASE_PATH
+BASE_PATH = BASE_PATH.rstrip("/")
+
+# Derived path helpers for OPDS and static content.
+OPDS_BASE_PATH = f"{BASE_PATH}/opds" if BASE_PATH else "/opds"
+STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
+
 # Authentication configuration
 AUTH_ENABLED = os.getenv("AUTH_ENABLED", "true").lower() == "true"
 AUTH_CACHE_EXPIRY = int(os.getenv("AUTH_CACHE_EXPIRY", "86400"))  # Default: 24 hours

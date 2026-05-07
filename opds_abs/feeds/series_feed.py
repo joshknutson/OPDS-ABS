@@ -439,7 +439,7 @@ class SeriesFeedGenerator(BaseFeedGenerator):
         series_id = series.get('id')
 
         # Add token to the series link if provided
-        series_link = f"/opds/{username}/libraries/{library_id}/series/{series_id}"
+        series_link = self.build_url(f"/opds/{username}/libraries/{library_id}/series/{series_id}")
         if token:
             series_link = f"{series_link}?token={token}"
 

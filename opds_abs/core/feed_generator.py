@@ -9,7 +9,7 @@ from lxml import etree
 from fastapi.responses import Response
 
 # Local application imports
-from opds_abs.config import AUDIOBOOKSHELF_API
+from opds_abs.config import AUDIOBOOKSHELF_API, BASE_PATH
 from opds_abs.utils import dict_to_xml
 from opds_abs.utils.error_utils import FeedGenerationError, log_error
 
@@ -84,6 +84,16 @@ class BaseFeedGenerator:
             }
         )
 
+    def build_url(self, path):
+        """Build an application-relative URL with the configured BASE_PATH."""
+        if not path.startswith("/"):
+            path = "/" + path
+        if BASE_PATH:
+            if path.startswith(BASE_PATH + "/") or path == BASE_PATH:
+                return path
+            return f"{BASE_PATH}{path}"
+        return path
+
     def create_base_feed(self, username=None, library_id=None, current_path=None, token=None):
         """Create a copy of the base feed with optional search link.
 
@@ -105,7 +115,7 @@ class BaseFeedGenerator:
             search_link = {
                 "link": {
                     "_attrs": {
-                        "href": f"/opds/{username}/libraries/{library_id}/search.xml",
+                        "href": self.build_url(f"/opds/{username}/libraries/{library_id}/search.xml"),
                         "rel": "search",
                         "type": "application/opensearchdescription+xml"
                     }
@@ -126,7 +136,7 @@ class BaseFeedGenerator:
                             "rel": "start",
                             "title": "Start Page",
                             "type": "application/atom+xml;profile=opds-catalog",
-                            "href": f"/opds/{username}/libraries/{library_id}{auth_param}"
+                            "href": self.build_url(f"/opds/{username}/libraries/{library_id}{auth_param}")
                         }
                     }
                 }
@@ -139,7 +149,7 @@ class BaseFeedGenerator:
                             "rel": "self",
                             "title": "This Page",
                             "type": "application/atom+xml;profile=opds-catalog",
-                            "href": f"/opds/{current_path}{auth_param}"
+                            "href": self.build_url(f"/opds/{current_path}{auth_param}")
                         }
                     }
                 }
@@ -152,7 +162,7 @@ class BaseFeedGenerator:
                             "rel": "alternate",
                             "title": "HTML Page",
                             "type": "text/html",
-                            "href": f"/opds/{current_path}{auth_param}"
+                            "href": self.build_url(f"/opds/{current_path}{auth_param}")
                         }
                     }
                 }
@@ -225,9 +235,9 @@ class BaseFeedGenerator:
             logger.debug("Book '%s' format: %s", book_title, ebook_format)
 
             # Proxy the cover image so the OPDS client can authenticate with Basic Auth
-            cover_url = f"/opds/proxy/cover/{book_id}.jpg"
+            cover_url = self.build_url(f"/opds/proxy/cover/{book_id}.jpg")
             series_list = book_metadata.get("seriesName", None)
-            
+
             # Using 0 as default epoch if missing
             added_timestamp = book.get('addedAt', 0) / 1000
             added_at = datetime.fromtimestamp(added_timestamp).strftime('%Y-%m-%d')
@@ -286,9 +296,9 @@ class BaseFeedGenerator:
 
             for ebook in ebook_inos:
                 file_ino = ebook.get('ino')
-                
+
                 # Use our proxy endpoint instead of direct Audiobookshelf API link
-                download_path = f"/opds/proxy/download/{book_id}/file/{file_ino}"
+                download_path = self.build_url(f"/opds/proxy/download/{book_id}/file/{file_ino}")
                 logger.debug("Generated proxied download URL for '%s': %s", book_title, download_path)
 
                 # Display the actual filename if available to differentiate formats/variants
@@ -466,7 +476,7 @@ class BaseFeedGenerator:
                         "rel": "next",
                         "title": "Next Page",
                         "type": "application/atom+xml;profile=opds-catalog",
-                        "href": f"/opds/{current_path}{separator}start_index={next_start_index}{auth_param}"
+                        "href": self.build_url(f"/opds/{current_path}{separator}start_index={next_start_index}{auth_param}")
                     }
                 }
             }
@@ -486,7 +496,7 @@ class BaseFeedGenerator:
                         "rel": "previous",
                         "title": "Previous Page",
                         "type": "application/atom+xml;profile=opds-catalog",
-                        "href": f"/opds/{current_path}{separator}start_index={prev_start_index}{auth_param}"
+                        "href": self.build_url(f"/opds/{current_path}{separator}start_index={prev_start_index}{auth_param}")
                     }
                 }
             }

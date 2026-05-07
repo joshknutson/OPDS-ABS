@@ -103,7 +103,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                 "link": [
                     {
                         "_attrs": {
-                            "href": f"/opds/{username}/libraries/{library_id}",
+                            "href": self.build_url(f"/opds/{username}/libraries/{library_id}"),
                             "rel": "start",
                             "type": "application/atom+xml;profile=opds-catalog"
                         }
@@ -117,7 +117,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
 
             for nav in navigation:
                 # Set up navigation item paths and URLs
-                base_path = f"/opds/{username}/libraries/{library_id}/"
+                base_path = self.build_url(f"/opds/{username}/libraries/{library_id}/")
                 nav_params = nav.get('params','')
 
                 # Add authentication token to nav_params if available
@@ -129,6 +129,8 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                     nav_href = f"{base_path}{nav.get('path','')}?{nav_params}"
                 else:
                     nav_href = f"{base_path}{nav.get('path','')}"
+
+                nav_href = self.build_url(nav_href)
 
                 # Dynamic initial-based PNG icon using ui-avatars to ensure absolute URLs for MoonReader
                 nav_name = nav.get("name", "Menu").replace(" ", "+")

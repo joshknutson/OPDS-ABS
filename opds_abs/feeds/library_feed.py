@@ -90,7 +90,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
         libraries = data.get("libraries", [])
         if len(libraries) == 1:
             return RedirectResponse(
-                    url=f"/opds/{username}/libraries/{libraries[0].get('id', '')}",
+                    url=self.build_url(f"/opds/{username}/libraries/{libraries[0].get('id', '')}"),
                     status_code=302
             )
 
@@ -106,7 +106,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
                 updated_time = self.get_current_timestamp()
 
             # Use local static image for libraries since many OPDS readers reject URLs with query parameters
-            icon_url = "/static/images/libraries.png"
+            icon_url = self.build_url("/static/images/libraries.png")
             icon_type = "image/png"
 
             # Create entry data structure
@@ -118,7 +118,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
                     "link": [
                         {
                             "_attrs": {
-                                "href": f"/opds/{username}/libraries/{library['id']}",
+                                "href": self.build_url(f"/opds/{username}/libraries/{library['id']}"),
                                 "rel": "subsection",
                                 "type": "application/atom+xml;profile=opds-catalog"
                             }

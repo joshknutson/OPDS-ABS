@@ -15,6 +15,7 @@ services:
       # - AUDIOBOOKSHELF_URL=http://audiobookshelf
       - AUDIOBOOKSHELF_INTERNAL_URL=http://audiobookshelf
       - AUDIOBOOKSHELF_EXTERNAL_URL=https://abs.example.com
+      - BASE_PATH=  # Optional path prefix for OPDS endpoints, e.g. /service. Leave empty for default /opds.
       - AUTH_ENABLED=true
       - API_KEY_AUTH_ENABLED=true
       - OPDS_LOG_LEVEL=INFO

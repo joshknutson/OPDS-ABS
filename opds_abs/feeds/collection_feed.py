@@ -268,7 +268,7 @@ class CollectionFeedGenerator(BaseFeedGenerator):
             token: Optional token to include in URLs
         """
         # Base URL for pagination
-        base_url = f"/opds/{username}/libraries/{library_id}/collections/{collection_id}"
+        base_url = self.build_url(f"/opds/{username}/libraries/{library_id}/collections/{collection_id}")
         token_param = f"&token={token}" if token else ""
 
         # Add pagination links
@@ -333,7 +333,7 @@ class CollectionFeedGenerator(BaseFeedGenerator):
         """
         try:
             # Default cover and collection details
-            cover_url = "/static/images/collections.png"
+            cover_url = self.build_url("/static/images/collections.png")
             collection_id = collection.get("id", "")
             collection_name = collection.get("name", "Unknown collection name")
 
@@ -357,7 +357,7 @@ class CollectionFeedGenerator(BaseFeedGenerator):
                         break
 
             # Add token to the collection link if provided
-            collection_link = f"/opds/{username}/libraries/{library_id}/collections/{collection_id}"
+            collection_link = self.build_url(f"/opds/{username}/libraries/{library_id}/collections/{collection_id}")
             if token:
                 collection_link = f"{collection_link}?token={token}"
 
