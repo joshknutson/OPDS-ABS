@@ -9,7 +9,7 @@ OPDS-ABS follows a layered architecture pattern:
 
 1. API Layer (main.py):
    - FastAPI route handlers that process HTTP requests
-   - Authentication via Depends(get_authenticated_user)
+   - Authentication via Depends(require_auth)
    - Exception handling and conversion to OPDS-compatible responses
    - Basic validation of request parameters
 
@@ -389,28 +389,11 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     log_error(exc, context=context, log_traceback=False)
     return await http_exception_handler(request, exc)
 
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    """Render the index page.
-
-    Args:
-        request (Request): The incoming request object.
-
-    Returns:
-        HTMLResponse: The rendered index.html template.
-    """
-    try:
-        return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
-    except Exception as e:
-        log_error(e, context="Rendering index page")
-        raise convert_to_http_exception(e, status_code=500,
-            detail="Failed to render index page") from e
-
 
 @app.get("/", response_class=RedirectResponse)
 async def opds_root_redirect(
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Redirect to the authenticated user's OPDS root.
 
@@ -445,7 +428,7 @@ async def search_xml(
     username: str,
     library_id: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Render the search XML template.
 
@@ -486,7 +469,7 @@ async def search_xml(
 @app.get("/{username}")
 async def opds_root(
     username: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get the root OPDS feed for a user.
 
@@ -524,7 +507,7 @@ async def opds_root(
 async def opds_nav(
     username: str,
     library_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get the navigation feed for a library.
 
@@ -565,7 +548,7 @@ async def opds_search(
     username: str,
     library_id: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Search for items in a library.
 
@@ -614,7 +597,7 @@ async def opds_library(
     username: str,
     library_id: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get items from a specific library.
 
@@ -674,7 +657,7 @@ async def opds_library(
 async def opds_series(
     username: str,
     library_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get series from a specific library.
 
@@ -715,7 +698,7 @@ async def opds_series_items(
     username: str,
     library_id: str,
     series_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get items from a specific series.
 
@@ -766,7 +749,7 @@ async def opds_series_items(
 async def opds_collections(
     username: str,
     library_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get collections from a specific library.
 
@@ -807,7 +790,7 @@ async def opds_collection_items(
     username: str,
     library_id: str,
     collection_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get items from a specific collection using cached data when possible.
 
@@ -849,7 +832,7 @@ async def opds_collection_items(
 async def opds_authors(
     username: str,
     library_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get authors from a specific library.
 
@@ -890,7 +873,7 @@ async def opds_author_items(
     username: str,
     library_id: str,
     author_id: str,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Get items from a specific author using cached data when possible.
 
@@ -1026,7 +1009,7 @@ async def proxy_download(
     item_id: str,
     file_ino: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Proxy file downloads from Audiobookshelf to handle authentication properly.
 
@@ -1131,7 +1114,7 @@ async def proxy_download(
 async def proxy_cover(
     item_id: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Proxy cover images from Audiobookshelf to handle authentication properly."""
     from fastapi.responses import StreamingResponse
@@ -1167,7 +1150,7 @@ async def proxy_cover(
 async def proxy_author_image(
     author_id: str,
     request: Request,
-    auth_info: tuple = Depends(get_authenticated_user)
+    auth_info: tuple = Depends(require_auth)
 ):
     """Proxy author images from Audiobookshelf to handle authentication properly."""
     from fastapi.responses import StreamingResponse
