@@ -115,7 +115,7 @@ class BaseFeedGenerator:
             search_link = {
                 "link": {
                     "_attrs": {
-                        "href": self.build_url(f"/opds/{username}/libraries/{library_id}/search.xml"),
+                        "href": self.build_url(f"/{username}/libraries/{library_id}/search.xml"),
                         "rel": "search",
                         "type": "application/opensearchdescription+xml"
                     }
@@ -136,7 +136,7 @@ class BaseFeedGenerator:
                             "rel": "start",
                             "title": "Start Page",
                             "type": "application/atom+xml;profile=opds-catalog",
-                            "href": self.build_url(f"/opds/{username}/libraries/{library_id}{auth_param}")
+                            "href": self.build_url(f"/{username}/libraries/{library_id}{auth_param}")
                         }
                     }
                 }
@@ -149,7 +149,7 @@ class BaseFeedGenerator:
                             "rel": "self",
                             "title": "This Page",
                             "type": "application/atom+xml;profile=opds-catalog",
-                            "href": self.build_url(f"/opds/{current_path}{auth_param}")
+                            "href": self.build_url(f"/{current_path}{auth_param}")
                         }
                     }
                 }
@@ -162,7 +162,7 @@ class BaseFeedGenerator:
                             "rel": "alternate",
                             "title": "HTML Page",
                             "type": "text/html",
-                            "href": self.build_url(f"/opds/{current_path}{auth_param}")
+                            "href": self.build_url(f"/{current_path}{auth_param}")
                         }
                     }
                 }
@@ -235,7 +235,7 @@ class BaseFeedGenerator:
             logger.debug("Book '%s' format: %s", book_title, ebook_format)
 
             # Proxy the cover image so the OPDS client can authenticate with Basic Auth
-            cover_url = self.build_url(f"/opds/proxy/cover/{book_id}.jpg")
+            cover_url = self.build_url(f"/proxy/cover/{book_id}.jpg")
             series_list = book_metadata.get("seriesName", None)
 
             # Using 0 as default epoch if missing
@@ -298,7 +298,7 @@ class BaseFeedGenerator:
                 file_ino = ebook.get('ino')
 
                 # Use our proxy endpoint instead of direct Audiobookshelf API link
-                download_path = self.build_url(f"/opds/proxy/download/{book_id}/file/{file_ino}")
+                download_path = self.build_url(f"/proxy/download/{book_id}/file/{file_ino}")
                 logger.debug("Generated proxied download URL for '%s': %s", book_title, download_path)
 
                 # Display the actual filename if available to differentiate formats/variants
@@ -476,7 +476,7 @@ class BaseFeedGenerator:
                         "rel": "next",
                         "title": "Next Page",
                         "type": "application/atom+xml;profile=opds-catalog",
-                        "href": self.build_url(f"/opds/{current_path}{separator}start_index={next_start_index}{auth_param}")
+                        "href": self.build_url(f"/{current_path}{separator}start_index={next_start_index}{auth_param}")
                     }
                 }
             }
@@ -496,7 +496,7 @@ class BaseFeedGenerator:
                         "rel": "previous",
                         "title": "Previous Page",
                         "type": "application/atom+xml;profile=opds-catalog",
-                        "href": self.build_url(f"/opds/{current_path}{separator}start_index={prev_start_index}{auth_param}")
+                        "href": self.build_url(f"/{current_path}{separator}start_index={prev_start_index}{auth_param}")
                     }
                 }
             }

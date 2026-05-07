@@ -103,7 +103,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                 "link": [
                     {
                         "_attrs": {
-                            "href": self.build_url(f"/opds/{username}/libraries/{library_id}"),
+                            "href": self.build_url(f"/{username}/libraries/{library_id}"),
                             "rel": "start",
                             "type": "application/atom+xml;profile=opds-catalog"
                         }
@@ -117,7 +117,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
 
             for nav in navigation:
                 # Set up navigation item paths and URLs
-                base_path = self.build_url(f"/opds/{username}/libraries/{library_id}/")
+                base_path = self.build_url(f"/{username}/libraries/{library_id}/")
                 nav_params = nav.get('params','')
 
                 # Add authentication token to nav_params if available

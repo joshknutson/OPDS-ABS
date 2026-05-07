@@ -90,7 +90,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
         libraries = data.get("libraries", [])
         if len(libraries) == 1:
             return RedirectResponse(
-                    url=self.build_url(f"/opds/{username}/libraries/{libraries[0].get('id', '')}"),
+                    url=self.build_url(f"/{username}/libraries/{libraries[0].get('id', '')}"),
                     status_code=302
             )
 
@@ -118,7 +118,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
                     "link": [
                         {
                             "_attrs": {
-                                "href": self.build_url(f"/opds/{username}/libraries/{library['id']}"),
+                                "href": self.build_url(f"/{username}/libraries/{library['id']}"),
                                 "rel": "subsection",
                                 "type": "application/atom+xml;profile=opds-catalog"
                             }
