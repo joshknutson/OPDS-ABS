@@ -56,9 +56,11 @@ if __name__ == "__main__":
             host=host,
             port=port,
             reload=True,
+            proxy_headers=True,
+            forwarded_allow_ips="*",
             log_level=log_level,
             use_colors=True,
         )
         break
     else:
-        logger.error("Could not start server: no available ports between %s and %s.", base_port, base_port + 4)
+        logger.error("Could not start server: no available ports between %s and %s.", base_port, base_port + 4) 

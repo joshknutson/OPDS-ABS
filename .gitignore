@@ -3,3 +3,12 @@ __pycache__/
 *.py.swp
 .env
 .vscode/settings.json
+
+# Local development
+run_local.ps1
+temp_patch_build_url.py
+*.fixed
+patch_main.py
+*.pkl
+/opds_abs/data/
+opds_abs/data/cache.pkl

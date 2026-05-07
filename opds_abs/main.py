@@ -141,7 +141,7 @@ def build_url(path: str) -> str:
     if not path.startswith("/"):
         path = "/" + path
     if BASE_PATH:
-        if path == BASE_PATH or path.startswith(BASE_PATH + "/"):
+        if path.startswith(BASE_PATH + "/") or path == BASE_PATH:
             return path
         return f"{BASE_PATH}{path}"
     return path
@@ -209,7 +209,7 @@ app = FastAPI(
 )
 
 # Mount static files directory
-app.mount(STATIC_BASE_PATH, StaticFiles(directory="opds_abs/static"), name="static")
+app.mount("/static", StaticFiles(directory="opds_abs/static"), name="static")
 
 # Setup templates
 templates = Jinja2Templates(directory="opds_abs/templates")
