@@ -7,25 +7,14 @@ environment variables.
 import os
 import pathlib
 
-# Legacy and fallback logic for Audiobookshelf URLs
+# Audiobookshelf URL configuration
 _abs_url = os.getenv("AUDIOBOOKSHELF_URL")
 _abs_internal = os.getenv("AUDIOBOOKSHELF_INTERNAL_URL")
 _abs_external = os.getenv("AUDIOBOOKSHELF_EXTERNAL_URL")
 
-if _abs_url:
-	# Legacy: use AUDIOBOOKSHELF_URL for both
-	AUDIOBOOKSHELF_INTERNAL_URL = _abs_url
-	AUDIOBOOKSHELF_EXTERNAL_URL = _abs_url
-elif _abs_internal and not _abs_external:
-	AUDIOBOOKSHELF_INTERNAL_URL = _abs_internal
-	AUDIOBOOKSHELF_EXTERNAL_URL = _abs_internal
-elif _abs_external and not _abs_internal:
-	AUDIOBOOKSHELF_INTERNAL_URL = _abs_external
-	AUDIOBOOKSHELF_EXTERNAL_URL = _abs_external
-else:
-	# Both set or none set: use both or fallback to default
-	AUDIOBOOKSHELF_INTERNAL_URL = _abs_internal or "http://localhost"
-	AUDIOBOOKSHELF_EXTERNAL_URL = _abs_external or AUDIOBOOKSHELF_INTERNAL_URL
+# Prioritize specific variables, fallback to the legacy AUDIOBOOKSHELF_URL
+AUDIOBOOKSHELF_INTERNAL_URL = _abs_internal or _abs_url or "http://localhost"
+AUDIOBOOKSHELF_EXTERNAL_URL = _abs_external or _abs_url or AUDIOBOOKSHELF_INTERNAL_URL
 
 # API endpoints
 AUDIOBOOKSHELF_API = AUDIOBOOKSHELF_INTERNAL_URL + "/api"
