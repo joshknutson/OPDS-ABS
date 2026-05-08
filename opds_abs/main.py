@@ -401,6 +401,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
 
 
 @app.get("/")
+@app.get("")
 async def opds_root_redirect(
     request: Request,
     auth_info: tuple = Depends(require_auth)

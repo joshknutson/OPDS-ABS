@@ -7,18 +7,6 @@ environment variables.
 import os
 import pathlib
 
-# Audiobookshelf URL configuration
-_abs_url = os.getenv("AUDIOBOOKSHELF_URL")
-_abs_internal = os.getenv("AUDIOBOOKSHELF_INTERNAL_URL")
-_abs_external = os.getenv("AUDIOBOOKSHELF_EXTERNAL_URL")
-
-# Prioritize specific variables, fallback to the legacy AUDIOBOOKSHELF_URL
-AUDIOBOOKSHELF_INTERNAL_URL = _abs_internal or _abs_url or "http://localhost"
-AUDIOBOOKSHELF_EXTERNAL_URL = _abs_external or _abs_url or AUDIOBOOKSHELF_INTERNAL_URL
-
-# API endpoints
-AUDIOBOOKSHELF_API = AUDIOBOOKSHELF_INTERNAL_URL + "/api"
-
 # Optional deployment path prefix for the application.
 # Example: BASE_PATH=/service will expose OPDS at /service/opds
 BASE_PATH = os.getenv("BASE_PATH", "").strip()
@@ -26,12 +14,24 @@ if BASE_PATH and not BASE_PATH.startswith("/"):
     BASE_PATH = "/" + BASE_PATH
 BASE_PATH = BASE_PATH.rstrip("/")
 
-# Derived path helpers for OPDS and static content.
-OPDS_BASE_PATH = BASE_PATH if BASE_PATH else "/opds"
-STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
-# External URL for the OPDS service (for absolute links in feeds)
-OPDS_EXTERNAL_URL = AUDIOBOOKSHELF_EXTERNAL_URL.rstrip("/") + BASE_PATH if AUDIOBOOKSHELF_EXTERNAL_URL else ""
+# Audiobookshelf URL configuration
+_abs_url = os.getenv("AUDIOBOOKSHELF_URL")
+_abs_internal = os.getenv("AUDIOBOOKSHELF_INTERNAL_URL")
+_abs_external = os.getenv("AUDIOBOOKSHELF_EXTERNAL_URL")
 
+# Prioritize specific variables, fallback to the legacy AUDIOBOOKSHELF_URL, and ensure no trailing slashes
+AUDIOBOOKSHELF_INTERNAL_URL = (_abs_internal or _abs_url or "http://localhost").rstrip("/")
+AUDIOBOOKSHELF_EXTERNAL_URL = (_abs_external or _abs_url or AUDIOBOOKSHELF_INTERNAL_URL).rstrip("/")
+
+# External URL for the OPDS service (for absolute links in feeds)
+OPDS_EXTERNAL_URL = (AUDIOBOOKSHELF_EXTERNAL_URL + BASE_PATH).rstrip("/") if AUDIOBOOKSHELF_EXTERNAL_URL else ""
+
+# API endpoints
+AUDIOBOOKSHELF_API = AUDIOBOOKSHELF_INTERNAL_URL + "/api"
+
+# Derived path helpers for OPDS and static content.
+OPDS_BASE_PATH = f"{BASE_PATH}/opds" if BASE_PATH else "/opds"
+STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
 
 # Authentication configuration
 AUTH_ENABLED = os.getenv("AUTH_ENABLED", "true").lower() == "true"
