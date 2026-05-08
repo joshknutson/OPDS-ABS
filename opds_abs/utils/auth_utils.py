@@ -539,14 +539,17 @@ async def verify_credentials(request: Request) -> Tuple[Optional[str], Optional[
     logger.warning(f"Invalid credential combination in request")
     return None, None, None
 
-async def get_authenticated_user(request: Request) -> Any:
+async def get_authenticated_user(request: Request) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """Create a FastAPI dependency to get the authenticated user.
 
     Args:
         request (Request): The FastAPI request object
 
     Returns:
-        Tuple of (username, token, display_name) or Response if no credentials/auth failed
+        Tuple of (username, token, display_name) or (None, None, None) if no credentials
+
+    Raises:
+        HTTPException: If authentication fails or server is unavailable
     """
     try:
         # Get credentials and token
@@ -556,8 +559,9 @@ async def get_authenticated_user(request: Request) -> Any:
         if username and token:
             return username, token, display_name
 
+        # If credentials were provided but invalid, verify_credentials would have raised AuthenticationError
         # If we get here with no credentials, it means no credentials were provided
-        return None
+        return None, None, None
 
     except AuthenticationError as e:
         # Check if this is a server connection issue
@@ -566,40 +570,42 @@ async def get_authenticated_user(request: Request) -> Any:
             error_id = id(e)
             error_message = f"Audiobookshelf server is unavailable: {str(e)}"
             logger.error(f"Server unavailable [{error_id}]: {error_message}")
-            raise HTTPException(status_code=503, detail=error_message)
+
+            # Raise an HTTPException with 503 status code
+            raise HTTPException(
+                status_code=503,  # Service Unavailable
+                detail=error_message
+            )
         else:
-            # Regular authentication failure - return a 401 with WWW-Authenticate header
-            # Simple text response for better compatibility with KOReader
-            return Response(
-                content="Authentication Required",
+            # Regular authentication failure - raise a 401
+            raise HTTPException(
                 status_code=401,
+                detail=str(e),
                 headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
             )
 
-async def require_auth(request: Request) -> Any:
+async def require_auth(request: Request) -> Tuple[str, str, str]:
     """Create a FastAPI dependency to require authentication.
 
     Args:
         request: The FastAPI request object
 
     Returns:
-        Tuple of (username, token, display_name) or Response if auth failed
-    """
-    auth_info = await get_authenticated_user(request)
-    
-    # Handle the case where get_authenticated_user returns a Response object
-    if isinstance(auth_info, Response):
-        return auth_info
+        Tuple of (username, token, display_name)
 
-    if not auth_info:
-        # Simple text response for better compatibility with KOReader
-        return Response(
-            content="Authentication Required",
+    Raises:
+        HTTPException: If authentication fails or no credentials provided
+    """
+    username, token, display_name = await get_authenticated_user(request)
+
+    if not username or not token:
+        raise HTTPException(
             status_code=401,
+            detail="Authentication required",
             headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
         )
 
-    return auth_info
+    return username, token, display_name
 
 def get_token_for_username(username: str) -> Optional[str]:
     """Get a cached token for a username if available.

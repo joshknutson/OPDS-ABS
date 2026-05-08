@@ -222,6 +222,16 @@ app = FastAPI(
     root_path=BASE_PATH, redirect_slashes=False
 )
 
+@app.exception_handler(401)
+async def custom_401_handler(request: Request, exc: HTTPException):
+    """Custom 401 handler to provide a plain text challenge for KOReader."""
+    return Response(
+        content="Authentication Required",
+        status_code=401,
+        headers={"WWW-Authenticate": 'Basic realm="OPDS-ABS"'}
+    )
+
+
 @app.get("/ping")
 async def ping():
     """Public endpoint to verify connectivity behind a proxy."""
