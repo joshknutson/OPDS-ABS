@@ -64,6 +64,10 @@ from fastapi.responses import Response
 from opds_abs.config import AUDIOBOOKSHELF_INTERNAL_URL, AUTH_ENABLED, AUTH_CACHE_EXPIRY, API_KEY_AUTH_ENABLED, AUTH_TOKEN_CACHING
 from opds_abs.utils.cache_utils import _create_cache_key, cache_get, cache_set
 from opds_abs.utils.error_utils import AuthenticationError, log_error
+class KOReaderAuthException(Exception):
+    """Custom exception to trigger the KOReader-friendly 401 response."""
+    pass
+
 
 # Create a logger for this module
 logger = logging.getLogger(__name__)

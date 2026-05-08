@@ -30,7 +30,7 @@ OPDS_EXTERNAL_URL = (AUDIOBOOKSHELF_EXTERNAL_URL + BASE_PATH).rstrip("/") if AUD
 AUDIOBOOKSHELF_API = AUDIOBOOKSHELF_INTERNAL_URL + "/api"
 
 # Derived path helpers for OPDS and static content.
-OPDS_BASE_PATH = f"{BASE_PATH}/opds" if BASE_PATH else "/opds"
+OPDS_BASE_PATH = BASE_PATH if BASE_PATH else "/opds"
 STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
 
 # Authentication configuration

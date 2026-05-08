@@ -61,7 +61,7 @@ from opds_abs.config import (
     AUDIOBOOKSHELF_INTERNAL_URL, AUDIOBOOKSHELF_EXTERNAL_URL,
     API_KEY_AUTH_ENABLED, AUTH_TOKEN_CACHING,
     PAGINATION_ENABLED, ITEMS_PER_PAGE,
-    BASE_PATH, STATIC_BASE_PATH
+    BASE_PATH, STATIC_BASE_PATH, OPDS_BASE_PATH
 )
 from opds_abs.feeds.library_feed import LibraryFeedGenerator
 from opds_abs.feeds.navigation_feed import NavigationFeedGenerator
@@ -71,7 +71,7 @@ from opds_abs.feeds.author_feed import AuthorFeedGenerator
 from opds_abs.feeds.search_feed import SearchFeedGenerator
 from opds_abs.utils.cache_utils import _cache, clear_cache, load_cache_from_disk, save_cache_to_disk
 from opds_abs.api.client import invalidate_cache
-from opds_abs.utils.auth_utils import get_authenticated_user, require_auth
+from opds_abs.utils.auth_utils import get_authenticated_user, require_auth, KOReaderAuthException
 from opds_abs.utils.error_utils import (
     OPDSBaseException,
     ResourceNotFoundError,
@@ -219,11 +219,11 @@ app = FastAPI(
     description="OPDS server for Audiobookshelf",
     version="0.1.0",
     lifespan=lifespan,
-    root_path=BASE_PATH, redirect_slashes=False
+    root_path="", redirect_slashes=False
 )
 
-@app.exception_handler(401)
-async def custom_401_handler(request: Request, exc: HTTPException):
+@app.exception_handler(KOReaderAuthException)
+async def custom_auth_handler(request: Request, exc: Exception):
     """Custom 401 handler to provide a plain text challenge for KOReader."""
     return Response(
         content="Authentication Required",
@@ -420,8 +420,8 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     return await http_exception_handler(request, exc)
 
 
-@app.get("/")
-@app.get("")
+@app.get(OPDS_BASE_PATH + "/")
+@app.get(OPDS_BASE_PATH)
 async def opds_root_redirect(
     request: Request,
     auth_info: tuple = Depends(require_auth)
@@ -435,7 +435,7 @@ async def opds_root_redirect(
     return await LibraryFeedGenerator().generate_root_feed(display_name, token)
 
 
-@app.get("/{username}/libraries/{library_id}/search.xml", response_class=HTMLResponse)
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/search.xml", response_class=HTMLResponse)
 async def search_xml(
     username: str,
     library_id: str,
@@ -479,7 +479,7 @@ async def search_xml(
             detail="Failed to render search template") from e
 
 
-@app.get("/{username}")
+@app.get(OPDS_BASE_PATH + "/{username}")
 async def opds_root(
     username: str,
     auth_info: tuple = Depends(require_auth)
@@ -516,7 +516,7 @@ async def opds_root(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}")
 async def opds_nav(
     username: str,
     library_id: str,
@@ -556,7 +556,7 @@ async def opds_nav(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/search")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/search")
 async def opds_search(
     username: str,
     library_id: str,
@@ -605,7 +605,7 @@ async def opds_search(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/items")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/items")
 async def opds_library(
     username: str,
     library_id: str,
@@ -666,7 +666,7 @@ async def opds_library(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/series")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/series")
 async def opds_series(
     username: str,
     library_id: str,
@@ -706,7 +706,7 @@ async def opds_series(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/series/{series_id}")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/series/{series_id}")
 async def opds_series_items(
     username: str,
     library_id: str,
@@ -758,7 +758,7 @@ async def opds_series_items(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/collections")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/collections")
 async def opds_collections(
     username: str,
     library_id: str,
@@ -798,7 +798,7 @@ async def opds_collections(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/collections/{collection_id}")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/collections/{collection_id}")
 async def opds_collection_items(
     username: str,
     library_id: str,
@@ -841,7 +841,7 @@ async def opds_collection_items(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/authors")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/authors")
 async def opds_authors(
     username: str,
     library_id: str,
@@ -881,7 +881,7 @@ async def opds_authors(
         return handle_exception(e, context=context)
 
 
-@app.get("/{username}/libraries/{library_id}/authors/{author_id}")
+@app.get(OPDS_BASE_PATH + "/{username}/libraries/{library_id}/authors/{author_id}")
 async def opds_author_items(
     username: str,
     library_id: str,
@@ -924,7 +924,7 @@ async def opds_author_items(
         return handle_exception(e, context=context)
 
 
-@app.get("/admin/cache/stats")
+@app.get(OPDS_BASE_PATH + "/admin/cache/stats")
 async def get_cache_stats(auth_info: tuple = Depends(require_auth)):
     """Get statistics about the cache.
 
@@ -1017,7 +1017,7 @@ async def invalidate_specific_cache(
         raise CacheError(f"Failed to invalidate cache for {endpoint}") from e
 
 
-@app.get("/proxy/download/{item_id}/file/{file_ino}")
+@app.get(OPDS_BASE_PATH + "/proxy/download/{item_id}/file/{file_ino}")
 async def proxy_download(
     item_id: str,
     file_ino: str,
@@ -1123,7 +1123,7 @@ async def proxy_download(
         logger.error("Error setting up download proxy: %s", str(e))
         raise HTTPException(status_code=500, detail=f"Failed to set up download: {str(e)}")
 
-@app.get("/proxy/cover/{item_id}.jpg")
+@app.get(OPDS_BASE_PATH + "/proxy/cover/{item_id}.jpg")
 async def proxy_cover(
     item_id: str,
     request: Request,
@@ -1159,7 +1159,7 @@ async def proxy_cover(
 
     return StreamingResponse(stream_file(), media_type="image/jpeg")
 
-@app.get("/proxy/author/{author_id}.jpg")
+@app.get(OPDS_BASE_PATH + "/proxy/author/{author_id}.jpg")
 async def proxy_author_image(
     author_id: str,
     request: Request,
