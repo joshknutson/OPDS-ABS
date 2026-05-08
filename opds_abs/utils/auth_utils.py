@@ -8,9 +8,9 @@ Authentication Architecture:
 The OPDS-ABS application uses a multi-layered authentication system:
 
 1. Client Authentication Flow:
-   - Username/Password: Request → Basic Auth Header → verify_credentials() → Audiobookshelf API → Token
+   - Username/Password: Request → Basic Auth Header → verify_credentials() → Audiobookshelf API → Token 
    - API Key (Basic Auth): Request → Basic Auth Header (username:apikey) → verify_credentials() → Audiobookshelf API → Token
-   - API Key (Bearer): Request → Bearer Auth Header → verify_credentials() → Audiobookshelf API → Token
+   - API Key (Bearer): Request → Bearer Auth Header → verify_credentials() → Audiobookshelf API → Token 
 
 2. Component Relationships:
    - FastAPI dependency injection system for auth requirements
@@ -54,11 +54,12 @@ Option 2: Bearer Token (for direct API access)
 """
 import base64
 import logging
-from typing import Optional, Tuple, Dict
+from typing import Optional, Tuple, Dict, Any
 import aiohttp
 
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBasic
+from fastapi.responses import Response
 
 from opds_abs.config import AUDIOBOOKSHELF_INTERNAL_URL, AUTH_ENABLED, AUTH_CACHE_EXPIRY, API_KEY_AUTH_ENABLED, AUTH_TOKEN_CACHING
 from opds_abs.utils.cache_utils import _create_cache_key, cache_get, cache_set
@@ -74,7 +75,7 @@ security = HTTPBasic(auto_error=False)
 # This helps maintain authentication across requests by caching tokens
 TOKEN_CACHE: Dict[str, Tuple[str, str]] = {}
 
-async def authenticate_with_audiobookshelf(username: str, password: str, api_key: str = None) -> Tuple[str, str]:
+async def authenticate_with_audiobookshelf(username: str, password: str, api_key: str = None) -> Tuple[str, str]:      
     """Authenticate with Audiobookshelf and get a token.
 
     Args:
@@ -105,7 +106,7 @@ async def authenticate_with_audiobookshelf(username: str, password: str, api_key
     # API keys in Audiobookshelf are typically 32+ characters
     # Only try this if API_KEY_AUTH_ENABLED is true
     if password and API_KEY_AUTH_ENABLED and len(password) >= 32:
-        logger.debug(f"Password looks like an API key (length: {len(password)}), trying API key auth first")
+        logger.debug(f"Password looks like an API key (length: {len(password)}), trying API key auth first")    
         try:
             # Try to authenticate with the credential as an API key
             return await authenticate_with_api_key(username, password)
@@ -159,7 +160,7 @@ async def authenticate_with_audiobookshelf(username: str, password: str, api_key
             except aiohttp.ClientError as client_error:
                 # For other client errors, provide a cleaner error message
                 logger.error("Authentication error for %s: %s", username, str(client_error))
-                raise AuthenticationError(f"Error connecting to Audiobookshelf: {str(client_error)}") from None
+                raise AuthenticationError(f"Error connecting to Audiobookshelf: {str(client_error)}") from None        
     except AuthenticationError:
         # Re-raise authentication errors without modification
         raise
@@ -216,7 +217,7 @@ async def authenticate_with_api_key(username: str, api_key: str) -> Tuple[str, s
                             actual_username = user_data.get("username", "")
                             display_name = actual_username
 
-                            logger.info(f"Successfully authenticated with API key for user: {actual_username}")
+                            logger.info(f"Successfully authenticated with API key for user: {actual_username}")        
                             return token, display_name
 
                 # If we get here, /api/me didn't work. Try /api/authorize as fallback
@@ -267,7 +268,7 @@ async def authenticate_with_api_key(username: str, api_key: str) -> Tuple[str, s
 
                     # If username was provided (not the placeholder) and doesn't match, log a warning
                     if username != "api_key_user" and username != actual_username:
-                        logger.warning("API key belongs to user '%s', not '%s'", actual_username, username)
+                        logger.warning("API key belongs to user '%s', not '%s'", actual_username, username)     
 
                     # Always use the actual username from Audiobookshelf
                     username = actual_username
@@ -284,7 +285,7 @@ async def authenticate_with_api_key(username: str, api_key: str) -> Tuple[str, s
                 ) from None
             except aiohttp.ClientError as client_error:
                 logger.error("API key authentication error for %s: %s", username, str(client_error))
-                raise AuthenticationError(f"Error connecting to Audiobookshelf: {str(client_error)}") from None
+                raise AuthenticationError(f"Error connecting to Audiobookshelf: {str(client_error)}") from None        
     except AuthenticationError:
         # Re-raise authentication errors without modification
         raise
@@ -303,6 +304,13 @@ def get_credentials_from_request(request: Request) -> Tuple[Optional[str], Optio
         Tuple of (username, password, api_key) or (None, None, None) if not found
     """
     auth_header = request.headers.get("Authorization")
+
+    # DEBUG LOGGING FOR PROXY ISSUES
+    logger.debug("--- AUTH HEADER DEBUG ---")
+    logger.debug(f"Path: {request.url.path}")
+    logger.debug(f"Authorization Header: {auth_header[:15] + '...' if auth_header else 'None'}")
+    logger.debug(f"Headers: {dict(request.headers)}")
+    logger.debug("--- END DEBUG ---")
 
     # Check for token parameter in query - this is supported by some OPDS clients
     token_param = request.query_params.get("token")
@@ -337,7 +345,7 @@ def get_credentials_from_request(request: Request) -> Tuple[Optional[str], Optio
                     if len(parts) == 2:
                         username, credential = parts
 
-                        # Examine the credential - if it looks like an API key and API_KEY_AUTH_ENABLED is False,
+                        # Examine the credential - if it looks like an API key and API_KEY_AUTH_ENABLED is False,      
                         # we should log a warning as this won't work properly
                         if len(credential) >= 32 and not API_KEY_AUTH_ENABLED:
                             logger.warning(
@@ -345,7 +353,7 @@ def get_credentials_from_request(request: Request) -> Tuple[Optional[str], Optio
                                 f"but API_KEY_AUTH_ENABLED is False. Authentication may fail."
                             )
 
-                        # Return as a password - authenticate_with_audiobookshelf will handle it based on settings
+                        # Return as a password - authenticate_with_audiobookshelf will handle it based on settings     
                         return username, credential, None
 
                 logger.warning("Basic auth doesn't contain username:password format")
@@ -359,7 +367,7 @@ def get_credentials_from_request(request: Request) -> Tuple[Optional[str], Optio
         elif auth_type.lower() == "bearer":
             # Check if API key authentication is enabled
             if not API_KEY_AUTH_ENABLED:
-                logger.warning("Bearer token found but API_KEY_AUTH_ENABLED is False. Authentication will fail.")
+                logger.warning("Bearer token found but API_KEY_AUTH_ENABLED is False. Authentication will fail.")      
                 return None, None, None
 
             logger.debug("Found Bearer token in Authorization header")
@@ -491,7 +499,7 @@ async def verify_credentials(request: Request) -> Tuple[Optional[str], Optional[
             )
         logger.debug(f"Attempting username/password authentication for user: {username}")
     else:
-        logger.debug(f"No valid credentials found in request")
+        logger.debug("No valid credentials found in request")
         return None, None, None
 
     # API key authentication
@@ -531,17 +539,14 @@ async def verify_credentials(request: Request) -> Tuple[Optional[str], Optional[
     logger.warning(f"Invalid credential combination in request")
     return None, None, None
 
-async def get_authenticated_user(request: Request) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+async def get_authenticated_user(request: Request) -> Any:
     """Create a FastAPI dependency to get the authenticated user.
 
     Args:
         request (Request): The FastAPI request object
 
     Returns:
-        Tuple of (username, token, display_name) or (None, None, None) if no credentials
-
-    Raises:
-        HTTPException: If authentication fails or server is unavailable
+        Tuple of (username, token, display_name) or Response if no credentials/auth failed
     """
     try:
         # Get credentials and token
@@ -551,53 +556,50 @@ async def get_authenticated_user(request: Request) -> Tuple[Optional[str], Optio
         if username and token:
             return username, token, display_name
 
-        # If credentials were provided but invalid, verify_credentials would have raised AuthenticationError
         # If we get here with no credentials, it means no credentials were provided
-        return None, None, None
+        return None
 
     except AuthenticationError as e:
         # Check if this is a server connection issue
-        if "Cannot connect" in str(e) or "not responding" in str(e) or "connecting to Audiobookshelf" in str(e):
+        if "Cannot connect" in str(e) or "not responding" in str(e) or "connecting to Audiobookshelf" in str(e):       
             # Server unavailable - raise a 503 Service Unavailable instead of 401
             error_id = id(e)
             error_message = f"Audiobookshelf server is unavailable: {str(e)}"
             logger.error(f"Server unavailable [{error_id}]: {error_message}")
-
-            # Raise an HTTPException with 503 status code
-            raise HTTPException(
-                status_code=503,  # Service Unavailable
-                detail=error_message
-            )
+            raise HTTPException(status_code=503, detail=error_message)
         else:
             # Regular authentication failure - return a 401 with WWW-Authenticate header
-            raise HTTPException(
+            # Simple text response for better compatibility with KOReader
+            return Response(
+                content="Authentication Required",
                 status_code=401,
-                detail=str(e),
-                headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\", charset=\"UTF-8\""}
+                headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
             )
 
-async def require_auth(request: Request) -> Tuple[str, str, str]:
+async def require_auth(request: Request) -> Any:
     """Create a FastAPI dependency to require authentication.
 
     Args:
         request: The FastAPI request object
 
     Returns:
-        Tuple of (username, token, display_name)
-
-    Raises:
-        HTTPException: If authentication fails or no credentials provided
+        Tuple of (username, token, display_name) or Response if auth failed
     """
-    username, token, display_name = await get_authenticated_user(request)
+    auth_info = await get_authenticated_user(request)
+    
+    # Handle the case where get_authenticated_user returns a Response object
+    if isinstance(auth_info, Response):
+        return auth_info
 
-    if not username or not token:
-        raise HTTPException(
+    if not auth_info:
+        # Simple text response for better compatibility with KOReader
+        return Response(
+            content="Authentication Required",
             status_code=401,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\", charset=\"UTF-8\""}
+            headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
         )
 
-    return username, token, display_name
+    return auth_info
 
 def get_token_for_username(username: str) -> Optional[str]:
     """Get a cached token for a username if available.

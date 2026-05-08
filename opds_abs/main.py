@@ -213,13 +213,20 @@ async def lifespan(app: FastAPI):
         save_cache_to_disk()
 
 # Create FastAPI app
+
 app = FastAPI(
     title="OPDS-ABS",
     description="OPDS server for Audiobookshelf",
     version="0.1.0",
     lifespan=lifespan,
-    root_path=BASE_PATH
+    root_path=BASE_PATH, redirect_slashes=False
 )
+
+@app.get("/ping")
+async def ping():
+    """Public endpoint to verify connectivity behind a proxy."""
+    return {"status": "ok", "message": "OPDS-ABS is reachable"}
+
 
 # Mount static files directory
 app.mount("/static", StaticFiles(directory="opds_abs/static"), name="static")
