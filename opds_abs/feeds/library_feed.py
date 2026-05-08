@@ -75,7 +75,10 @@ class LibraryFeedGenerator(BaseFeedGenerator):
         logger.debug("Generating root feed for user: %s", username)
 
         data = await fetch_from_api("/libraries", token=token, username=username)
-        feed = self.create_base_feed(username=username, token=token)
+        libraries = data.get("libraries", [])
+        # Pick the first library ID if available to enable the search link at root level
+        lib_id = libraries[0].get('id') if libraries else None
+        feed = self.create_base_feed(username=username, library_id=lib_id, token=token)
 
         # Add feed metadata using dictionary approach
         feed_data = {
@@ -86,8 +89,6 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             }
         }
         dict_to_xml(feed, feed_data)
-
-        libraries = data.get("libraries", [])
         if len(libraries) == 1:
             return RedirectResponse(
                     url=self.build_url(f"/{username}/libraries/{libraries[0].get('id', '')}"),

@@ -137,10 +137,24 @@ logger = logging.getLogger(__name__)
 
 
 def build_url(path: str) -> str:
-    """Build a full URL for redirects using the configured BASE_PATH."""
+    """Build a URL, absolute if OPDS_EXTERNAL_URL is configured."""
+    from opds_abs.config import OPDS_EXTERNAL_URL, BASE_PATH
     if not path.startswith("/"):
         path = "/" + path
-    return path
+    
+    # Ensure path is just the relative part (strip BASE_PATH if present)
+    if BASE_PATH and (path.startswith(BASE_PATH + "/") or path == BASE_PATH):
+        rel_path = path[len(BASE_PATH):]
+    else:
+        rel_path = path
+        
+    if OPDS_EXTERNAL_URL:
+        return f"{OPDS_EXTERNAL_URL}{rel_path}"
+    
+    # Fallback to prefixed relative path
+    if BASE_PATH:
+        return f"{BASE_PATH}{rel_path}"
+    return rel_path
 
 # Set more specific log level for our app's loggers
 app_logger = logging.getLogger("opds_abs")
@@ -386,37 +400,18 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     return await http_exception_handler(request, exc)
 
 
-@app.get("/", response_class=RedirectResponse)
+@app.get("/")
 async def opds_root_redirect(
     request: Request,
     auth_info: tuple = Depends(require_auth)
 ):
-    """Redirect to the authenticated user's OPDS root.
-
-    Args:
-        request (Request): The incoming request.
-        auth_info (tuple): The authentication info (username, token, display_name).
-
-    Returns:
-        RedirectResponse: Redirect to the user's OPDS root.
+    """Serve the root feed directly at / to help picky OPDS clients.
+    
+    This avoids the 307 redirect that some clients (like KOReader) struggle with.
     """
     username, token, display_name = auth_info
-
-    if not username:
-        # Check if authentication was disabled or failed because server is unavailable
-        if not AUTH_ENABLED:
-            # Authentication is disabled, so use a default username
-            return RedirectResponse(url=build_url("/anonymous"))
-        else:
-            # If not authenticated, return a 401 with WWW-Authenticate header
-            raise HTTPException(
-                status_code=401,
-                detail="Authentication required",
-                headers={"WWW-Authenticate": "Basic realm=\"OPDS-ABS\""}
-            )
-
-    # Redirect to the user's OPDS root
-    return RedirectResponse(url=build_url(f"/{display_name}"))
+    from opds_abs.feeds.library_feed import LibraryFeedGenerator
+    return await LibraryFeedGenerator().generate_root_feed(display_name, token)
 
 
 @app.get("/{username}/libraries/{library_id}/search.xml", response_class=HTMLResponse)
@@ -452,6 +447,7 @@ async def search_xml(
                 "request": request,
                 "username": display_name if auth_username else username,
                 "library_id": library_id,
+                "opds_external_url": OPDS_EXTERNAL_URL,
                 "searchTerms": params.get('q', ''),
                 "token": token  # Add token to the template context
             }

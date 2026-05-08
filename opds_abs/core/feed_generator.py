@@ -85,14 +85,24 @@ class BaseFeedGenerator:
         )
 
     def build_url(self, path):
-        """Build an application-relative URL with the configured BASE_PATH."""
+        """Build a URL, absolute if OPDS_EXTERNAL_URL is configured."""
+        from opds_abs.config import OPDS_EXTERNAL_URL, BASE_PATH
         if not path.startswith("/"):
             path = "/" + path
+        
+        # Ensure path is just the relative part (strip BASE_PATH if present)
+        if BASE_PATH and (path.startswith(BASE_PATH + "/") or path == BASE_PATH):
+            rel_path = path[len(BASE_PATH):]
+        else:
+            rel_path = path
+            
+        if OPDS_EXTERNAL_URL:
+            return f"{OPDS_EXTERNAL_URL}{rel_path}"
+        
+        # Fallback to prefixed relative path
         if BASE_PATH:
-            if path.startswith(BASE_PATH + "/") or path == BASE_PATH:
-                return path
-            return f"{BASE_PATH}{path}"
-        return path
+            return f"{BASE_PATH}{rel_path}"
+        return rel_path
 
     def create_base_feed(self, username=None, library_id=None, current_path=None, token=None):
         """Create a copy of the base feed with optional search link.

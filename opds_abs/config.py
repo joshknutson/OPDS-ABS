@@ -40,6 +40,9 @@ BASE_PATH = BASE_PATH.rstrip("/")
 # Derived path helpers for OPDS and static content.
 OPDS_BASE_PATH = BASE_PATH if BASE_PATH else "/opds"
 STATIC_BASE_PATH = f"{BASE_PATH}/static" if BASE_PATH else "/static"
+# External URL for the OPDS service (for absolute links in feeds)
+OPDS_EXTERNAL_URL = AUDIOBOOKSHELF_EXTERNAL_URL.rstrip("/") + BASE_PATH if AUDIOBOOKSHELF_EXTERNAL_URL else ""
+
 
 # Authentication configuration
 AUTH_ENABLED = os.getenv("AUTH_ENABLED", "true").lower() == "true"
