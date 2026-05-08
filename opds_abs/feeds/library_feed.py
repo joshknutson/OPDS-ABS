@@ -86,7 +86,16 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             "title": {"_text": f"{username}'s Libraries"},
             "author": {
                 "name": {"_text": username}
-            }
+            },
+            "link": [
+                {
+                    "_attrs": {
+                        "href": self.build_url("/static/images/libraries.png"),
+                        "rel": "icon",
+                        "type": "image/png"
+                    }
+                }
+            ]
         }
         dict_to_xml(feed, feed_data)
         if len(libraries) == 1:
