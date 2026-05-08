@@ -86,16 +86,7 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             "title": {"_text": f"{username}'s Libraries"},
             "author": {
                 "name": {"_text": username}
-            },
-            "link": [
-                {
-                    "_attrs": {
-                        "href": self.build_url("/static/images/libraries.png"),
-                        "rel": "icon",
-                        "type": "image/png"
-                    }
-                }
-            ]
+            }
         }
         dict_to_xml(feed, feed_data)
         if len(libraries) == 1:
@@ -115,9 +106,9 @@ class LibraryFeedGenerator(BaseFeedGenerator):
             if not updated_time:
                 updated_time = self.get_current_timestamp()
 
-            # Use local static image for libraries since many OPDS readers reject URLs with query parameters
-            icon_url = self.build_url("/static/images/libraries.png")
-            icon_type = "image/png"
+            # Use ABS cover if available, otherwise fallback
+            icon_url = self.build_url(f"/proxy/cover/{library['id']}")
+            icon_type = "image/jpeg"
 
             # Create entry data structure
             entry_data = {

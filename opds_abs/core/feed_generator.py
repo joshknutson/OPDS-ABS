@@ -89,9 +89,11 @@ class BaseFeedGenerator:
         from opds_abs.config import OPDS_EXTERNAL_URL, BASE_PATH
         if not path.startswith("/"):
             path = "/" + path
-        
-        # Ensure path is just the relative part (strip BASE_PATH if present)
-        if BASE_PATH and (path.startswith(BASE_PATH + "/") or path == BASE_PATH):
+            
+        if path.startswith("http"):
+            return path
+            
+        if BASE_PATH and path.startswith(BASE_PATH + "/"):
             rel_path = path[len(BASE_PATH):]
         else:
             rel_path = path
@@ -99,7 +101,6 @@ class BaseFeedGenerator:
         if OPDS_EXTERNAL_URL:
             return f"{OPDS_EXTERNAL_URL}{rel_path}"
         
-        # Fallback to prefixed relative path
         if BASE_PATH:
             return f"{BASE_PATH}{rel_path}"
         return rel_path

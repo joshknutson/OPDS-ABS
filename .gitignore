@@ -12,3 +12,4 @@ patch_main.py
 *.pkl
 /opds_abs/data/
 opds_abs/data/cache.pkl
+verify_local.ps1

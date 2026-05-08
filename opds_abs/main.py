@@ -142,8 +142,12 @@ def build_url(path: str) -> str:
     if not path.startswith("/"):
         path = "/" + path
     
-    # Ensure path is just the relative part (strip BASE_PATH if present)
-    if BASE_PATH and (path.startswith(BASE_PATH + "/") or path == BASE_PATH):
+    # If path is already absolute, don't touch it
+    if path.startswith("http"):
+        return path
+        
+    # Standardize path: remove double prefixing
+    if BASE_PATH and path.startswith(BASE_PATH + "/"):
         rel_path = path[len(BASE_PATH):]
     else:
         rel_path = path
@@ -151,7 +155,6 @@ def build_url(path: str) -> str:
     if OPDS_EXTERNAL_URL:
         return f"{OPDS_EXTERNAL_URL}{rel_path}"
     
-    # Fallback to prefixed relative path
     if BASE_PATH:
         return f"{BASE_PATH}{rel_path}"
     return rel_path

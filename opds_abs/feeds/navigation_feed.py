@@ -117,7 +117,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
 
             for nav in navigation:
                 # Set up navigation item paths and URLs
-                base_path = self.build_url(f"/{username}/libraries/{library_id}/")
+                base_path = f"/{username}/libraries/{library_id}/"
                 nav_params = nav.get('params','')
 
                 # Add authentication token to nav_params if available
@@ -130,6 +130,7 @@ class NavigationFeedGenerator(BaseFeedGenerator):
                 else:
                     nav_href = f"{base_path}{nav.get('path','')}"
 
+                # Final absolute URL build
                 nav_href = self.build_url(nav_href)
 
                 # Dynamic initial-based PNG icon using ui-avatars to ensure absolute URLs for MoonReader
