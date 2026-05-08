@@ -60,3 +60,7 @@ ITEMS_PER_PAGE = int(os.getenv("ITEMS_PER_PAGE", "25"))  # Default: 25 items per
 
 # Logging configuration
 LOG_LEVEL = os.environ.get("OPDS_LOG_LEVEL", "INFO").upper()
+
+# URL Strategy: Use absolute URLs (https://...) or relative paths (/opds/...)
+# Relative paths are generally more compatible with reverse proxies.
+USE_ABSOLUTE_URLS = os.getenv("USE_ABSOLUTE_URLS", "false").lower() == "true"

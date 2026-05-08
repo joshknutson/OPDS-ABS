@@ -71,7 +71,7 @@ from opds_abs.feeds.author_feed import AuthorFeedGenerator
 from opds_abs.feeds.search_feed import SearchFeedGenerator
 from opds_abs.utils.cache_utils import _cache, clear_cache, load_cache_from_disk, save_cache_to_disk
 from opds_abs.api.client import invalidate_cache
-from opds_abs.utils.auth_utils import get_authenticated_user, require_auth, KOReaderAuthException
+from opds_abs.utils.auth_utils import get_authenticated_user, require_auth
 from opds_abs.utils.error_utils import (
     OPDSBaseException,
     ResourceNotFoundError,
@@ -137,27 +137,24 @@ logger = logging.getLogger(__name__)
 
 
 def build_url(path: str) -> str:
-    """Build a URL, absolute if OPDS_EXTERNAL_URL is configured."""
-    from opds_abs.config import OPDS_EXTERNAL_URL, BASE_PATH
+    """Build a URL according to the USE_ABSOLUTE_URLS strategy."""
+    from opds_abs.config import OPDS_EXTERNAL_URL, OPDS_BASE_PATH, USE_ABSOLUTE_URLS
     if not path.startswith("/"):
         path = "/" + path
     
-    # If path is already absolute, don't touch it
     if path.startswith("http"):
         return path
         
-    # Standardize path: remove double prefixing
-    if BASE_PATH and path.startswith(BASE_PATH + "/"):
-        rel_path = path[len(BASE_PATH):]
+    # Standardize path: remove redundant base prefix if present
+    if OPDS_BASE_PATH and path.startswith(OPDS_BASE_PATH + "/"):
+        rel_path = path[len(OPDS_BASE_PATH):]
     else:
         rel_path = path
         
-    if OPDS_EXTERNAL_URL:
+    if USE_ABSOLUTE_URLS and OPDS_EXTERNAL_URL:
         return f"{OPDS_EXTERNAL_URL}{rel_path}"
     
-    if BASE_PATH:
-        return f"{BASE_PATH}{rel_path}"
-    return rel_path
+    return f"{OPDS_BASE_PATH}{rel_path}"
 
 # Set more specific log level for our app's loggers
 app_logger = logging.getLogger("opds_abs")
@@ -222,14 +219,7 @@ app = FastAPI(
     root_path="", redirect_slashes=False
 )
 
-@app.exception_handler(KOReaderAuthException)
-async def custom_auth_handler(request: Request, exc: Exception):
-    """Custom 401 handler to provide a plain text challenge for KOReader."""
-    return Response(
-        content="Authentication Required",
-        status_code=401,
-        headers={"WWW-Authenticate": 'Basic realm="OPDS-ABS"'}
-    )
+
 
 
 @app.get("/ping")
@@ -469,6 +459,8 @@ async def search_xml(
                 "username": display_name if auth_username else username,
                 "library_id": library_id,
                 "opds_external_url": OPDS_EXTERNAL_URL,
+                "opds_base_path": OPDS_BASE_PATH,
+                "use_absolute_urls": USE_ABSOLUTE_URLS,
                 "searchTerms": params.get('q', ''),
                 "token": token  # Add token to the template context
             }

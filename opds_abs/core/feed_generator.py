@@ -85,25 +85,24 @@ class BaseFeedGenerator:
         )
 
     def build_url(self, path):
-        """Build a URL, absolute if OPDS_EXTERNAL_URL is configured."""
-        from opds_abs.config import OPDS_EXTERNAL_URL, BASE_PATH
+        """Build a URL according to the USE_ABSOLUTE_URLS strategy."""
+        from opds_abs.config import OPDS_EXTERNAL_URL, OPDS_BASE_PATH, USE_ABSOLUTE_URLS
         if not path.startswith("/"):
             path = "/" + path
             
         if path.startswith("http"):
             return path
             
-        if BASE_PATH and path.startswith(BASE_PATH + "/"):
-            rel_path = path[len(BASE_PATH):]
+        # Standardize path: remove redundant base prefix if present
+        if OPDS_BASE_PATH and path.startswith(OPDS_BASE_PATH + "/"):
+            rel_path = path[len(OPDS_BASE_PATH):]
         else:
             rel_path = path
             
-        if OPDS_EXTERNAL_URL:
+        if USE_ABSOLUTE_URLS and OPDS_EXTERNAL_URL:
             return f"{OPDS_EXTERNAL_URL}{rel_path}"
         
-        if BASE_PATH:
-            return f"{BASE_PATH}{rel_path}"
-        return rel_path
+        return f"{OPDS_BASE_PATH}{rel_path}"
 
     def create_base_feed(self, username=None, library_id=None, current_path=None, token=None):
         """Create a copy of the base feed with optional search link.
